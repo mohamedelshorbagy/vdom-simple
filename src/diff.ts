@@ -1,4 +1,4 @@
-import { tDiff, tPatch, ElmVNode, VNode } from "./types";
+import { tDiff, tPatch, ElmVNode, VNode, Listener } from "./types";
 import render from "./render";
 
 
@@ -46,7 +46,7 @@ const diffAttrs = (oldAttrs: object, newAttrs: object): tPatch => {
 
 
 
-const diffListeners = (oldListeners: object, newListeners: object): tPatch => {
+const diffListeners = (oldListeners: Listener, newListeners: Listener): tPatch => {
 
     const patches: tPatch[] = [];
 
@@ -75,10 +75,10 @@ const diffListeners = (oldListeners: object, newListeners: object): tPatch => {
         }
     }
     // old listeners
-    for (const [key, fn] of Object.entries(oldListeners)) {
+    for (const [key, oldFnOrListenerObj] of Object.entries(oldListeners)) {
         if (!(key in newListeners)) {
             const patch: tPatch = domNode => {
-                domNode.removeEventListener(key, fn);
+                domNode.removeEventListener(key, oldFnOrListenerObj);
                 return domNode;
             };
             patches.push(patch);
