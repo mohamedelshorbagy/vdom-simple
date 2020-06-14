@@ -151,7 +151,7 @@ const diff: tDiff = (oldVNode, newVNode) => {
         const newNode = render(newVNode);
         const patch: tPatch = domNode => {
             domNode.replaceWith(newNode);
-            return domNode;
+            return newNode as HTMLElement;
         }
         return patch;
     }
