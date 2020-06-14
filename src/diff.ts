@@ -1,18 +1,9 @@
 import { tDiff, tPatch, ElmVNode, VNode, Listener } from "./types";
 import render from "./render";
-
-
-function zip<T, M>(xs: T[], ys: M[]): Array<[T, M]> {
-    const collection = [];
-    for (let i = 0; i < Math.min(xs.length, ys.length); i++) {
-        collection.push([xs[i], ys[i]]);
-    }
-    return collection;
-}
+import { zip } from "./utils";
 
 
 const diffAttrs = (oldAttrs: object, newAttrs: object): tPatch => {
-
     const patches: tPatch[] = [];
     // add new attrs
     for (const [key, value] of Object.entries(newAttrs)) {
@@ -37,6 +28,7 @@ const diffAttrs = (oldAttrs: object, newAttrs: object): tPatch => {
     }
 
     return domNode => {
+        // apply attrs patches
         for (let patch of patches) {
             patch(domNode);
         }
@@ -50,8 +42,9 @@ const diffListeners = (oldListeners: Listener, newListeners: Listener): tPatch =
 
     const patches: tPatch[] = [];
 
-    // delete old listeners
+    // add new listeners
     for (const [key, fnOrListenerObj] of Object.entries(newListeners)) {
+        // add new listeners
         if (!(key in oldListeners)) {
             const patch: tPatch = domNode => {
                 domNode.addEventListener(key, fnOrListenerObj);
@@ -59,10 +52,9 @@ const diffListeners = (oldListeners: Listener, newListeners: Listener): tPatch =
             };
             patches.push(patch);
         } else {
-            // listener exist
-            // Diff the callback fns
-            // `true` => do nothing
-            // `false` => we have to remove it first then add it again
+            // Diff. the callback fns
+            // ? `true` => do nothing
+            // : `false` => we have to remove it first then add it again
             const oldFnOrListenerObj = oldListeners[key];
             if (fnOrListenerObj !== oldFnOrListenerObj) {
                 const patch: tPatch = domNode => {
@@ -74,7 +66,8 @@ const diffListeners = (oldListeners: Listener, newListeners: Listener): tPatch =
             }
         }
     }
-    // old listeners
+
+    // delete old listeners
     for (const [key, oldFnOrListenerObj] of Object.entries(oldListeners)) {
         if (!(key in newListeners)) {
             const patch: tPatch = domNode => {
@@ -84,9 +77,9 @@ const diffListeners = (oldListeners: Listener, newListeners: Listener): tPatch =
             patches.push(patch);
         }
     }
-    // add new attrs
 
     return domNode => {
+        // apply listener patches
         for (let patch of patches) {
             patch(domNode);
         }
@@ -122,6 +115,8 @@ const diffChildren = (oldChildren: VNode[], newChildren: VNode[]): tPatch => {
     return domNode => {
 
         // Patch old nodes
+        // here we need the existing dom nodes 
+        // so we use `childNodes` on domNode
         for (let [patch, child] of zip<tPatch, HTMLElement>(patches, domNode.childNodes as any)) {
             patch(child);
         }
@@ -139,6 +134,7 @@ const diffChildren = (oldChildren: VNode[], newChildren: VNode[]): tPatch => {
 
 const diff: tDiff = (oldVNode, newVNode) => {
 
+    // if node is empty so remove it from the DOM
     if (!newVNode) {
         const patch: tPatch = (domNode) => {
             domNode.remove();
@@ -147,6 +143,7 @@ const diff: tDiff = (oldVNode, newVNode) => {
         return patch;
     }
 
+    // In case of different tags just replace with the new one
     if ((oldVNode as ElmVNode).tag !== (newVNode as ElmVNode).tag) {
         const newNode = render(newVNode);
         const patch: tPatch = domNode => {
@@ -171,16 +168,13 @@ const diff: tDiff = (oldVNode, newVNode) => {
     }
 
 
-
-
-
-    // Base Case
+    // Normal Case
     const patchAttrs = diffAttrs((oldVNode as ElmVNode).attrs, (newVNode as ElmVNode).attrs);
     const patchChildren = diffChildren((oldVNode as ElmVNode).children, (newVNode as ElmVNode).children);
     const patchListeners = diffListeners((oldVNode as ElmVNode).listeners, (newVNode as ElmVNode).listeners);
 
     return domNode => {
-        // apply
+        // apply all patches
         patchAttrs(domNode);
         patchChildren(domNode);
         patchListeners(domNode);
