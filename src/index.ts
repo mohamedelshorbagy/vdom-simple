@@ -24,7 +24,7 @@ const createApp = count => createElement('div', {
                 type: 'text'
             },
             listeners: {
-                'input': inputListener
+                input: inputListener
             }
         }),
         createElement('button', {

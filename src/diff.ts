@@ -51,10 +51,10 @@ const diffListeners = (oldListeners: object, newListeners: object): tPatch => {
     const patches: tPatch[] = [];
 
     // delete old listeners
-    for (const [key, fn] of Object.entries(newListeners)) {
+    for (const [key, fnOrListenerObj] of Object.entries(newListeners)) {
         if (!(key in oldListeners)) {
             const patch: tPatch = domNode => {
-                domNode.addEventListener(key, fn);
+                domNode.addEventListener(key, fnOrListenerObj);
                 return domNode;
             };
             patches.push(patch);
@@ -63,11 +63,11 @@ const diffListeners = (oldListeners: object, newListeners: object): tPatch => {
             // Diff the callback fns
             // `true` => do nothing
             // `false` => we have to remove it first then add it again
-            const oldFn = oldListeners[key];
-            if (fn !== oldFn) {
+            const oldFnOrListenerObj = oldListeners[key];
+            if (fnOrListenerObj !== oldFnOrListenerObj) {
                 const patch: tPatch = domNode => {
-                    domNode.removeEventListener(key, oldFn);
-                    domNode.addEventListener(key, fn);
+                    domNode.removeEventListener(key, oldFnOrListenerObj);
+                    domNode.addEventListener(key, oldFnOrListenerObj);
                     return domNode;
                 }
                 patches.push(patch);

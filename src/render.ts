@@ -15,8 +15,8 @@ const render: tRender = (vNode) => {
     }
     
     // Add Listener to element
-    for(let [key, fn] of Object.entries(listeners)) {
-        elm.addEventListener(key, fn as any);
+    for(let [key, fnOrListenerObj] of Object.entries(listeners)) {
+        elm.addEventListener(key, fnOrListenerObj);
     }
 
     // Add Children
