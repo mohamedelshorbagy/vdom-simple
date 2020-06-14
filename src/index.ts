@@ -61,10 +61,10 @@ const interval = setInterval(() => {
     App = newApp;
 }, 1000)
 
-
-setTimeout(() => {
-    clearInterval(interval);
-}, 2000)
+// For aborting the interval
+// setTimeout(() => {
+//     clearInterval(interval);
+// }, 2000)
 
 
 
